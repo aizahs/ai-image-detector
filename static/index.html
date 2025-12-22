@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Image Detector</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; background:#0b0f17; color:#e8eefc; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 32px 18px; }
+    .card { background:#111a2b; border:1px solid #223055; border-radius: 16px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    h1 { font-size: 28px; margin: 0 0 8px; }
+    p { color:#b9c6e6; margin: 0 0 18px; line-height: 1.4; }
+    .row { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    .drop {
+      border: 2px dashed #2f4275; border-radius: 16px; padding: 18px; text-align: center;
+      background: rgba(255,255,255,.02);
+    }
+    .drop.drag { border-color:#7aa2ff; background: rgba(122,162,255,.08); }
+    input[type="file"] { display:none; }
+    .btn {
+      display:inline-block; cursor:pointer; user-select:none;
+      background:#4c7dff; color:#071024; padding: 10px 14px; border-radius: 12px; font-weight: 650;
+    }
+    .btn:active { transform: translateY(1px); }
+    .meta { font-size: 13px; color:#9fb0da; margin-top: 10px; }
+    .preview { display:flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+    img { max-width: 280px; border-radius: 14px; border: 1px solid #223055; }
+    .result { flex: 1; min-width: 240px; }
+    .pill { display:inline-block; padding: 6px 10px; border-radius: 999px; border:1px solid #223055; background:#0c1426; }
+    .good { border-color:#2b8a4b; }
+    .bad  { border-color:#b13b3b; }
+    .big  { font-size: 22px; font-weight: 750; margin: 8px 0 10px; }
+    .bar { height: 10px; background:#0c1426; border:1px solid #223055; border-radius: 999px; overflow:hidden; }
+    .bar > div { height: 100%; width: 0%; background:#4c7dff; transition: width .25s ease; }
+    .err { color:#ffb4b4; }
+    .small { font-size: 13px; color:#9fb0da; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>AI Image Detector</h1>
+      <p>Upload an image and I’ll estimate whether it’s <b>Real</b> or <b>AI-generated</b>.</p>
+
+      <div id="drop" class="drop">
+        <label class="btn" for="file">Choose an image</label>
+        <input id="file" type="file" accept="image/*" />
+        <div class="meta">…or drag & drop an image here</div>
+      </div>
+
+      <div style="height:16px"></div>
+
+      <div class="preview" id="preview" style="display:none;">
+        <img id="img" alt="preview" />
+        <div class="result">
+          <div id="status" class="pill">Ready</div>
+          <div id="label" class="big">—</div>
+          <div class="bar"><div id="fill"></div></div>
+          <div style="height:10px"></div>
+          <div id="conf" class="small">Confidence: —</div>
+          <div id="prob" class="small">P(AI-generated): —</div>
+          <div style="height:10px"></div>
+          <div id="err" class="err"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const drop = document.getElementById("drop");
+  const fileInput = document.getElementById("file");
+  const preview = document.getElementById("preview");
+  const imgEl = document.getElementById("img");
+  const statusEl = document.getElementById("status");
+  const labelEl = document.getElementById("label");
+  const confEl = document.getElementById("conf");
+  const probEl = document.getElementById("prob");
+  const fillEl = document.getElementById("fill");
+  const errEl = document.getElementById("err");
+
+  function setStatus(text, kind="") {
+    statusEl.textContent = text;
+    statusEl.className = "pill " + kind;
+  }
+
+  async function predict(file) {
+    errEl.textContent = "";
+    setStatus("Analyzing…");
+    labelEl.textContent = "—";
+    confEl.textContent = "Confidence: —";
+    probEl.textContent = "P(AI-generated): —";
+    fillEl.style.width = "0%";
+
+    // show preview
+    preview.style.display = "flex";
+    imgEl.src = URL.createObjectURL(file);
+
+    const form = new FormData();
+    form.append("file", file);
+
+    try {
+      const res = await fetch("/predict", { method: "POST", body: form });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const label = data.label;
+      const conf = Number(data.confidence ?? 0);
+      const prob = Number(data.prob_ai_generated ?? 0);
+
+      labelEl.textContent = label;
+      confEl.textContent = `Confidence: ${(conf*100).toFixed(1)}%`;
+      probEl.textContent = `P(AI-generated): ${(prob*100).toFixed(1)}%`;
+      fillEl.style.width = `${Math.max(0, Math.min(100, prob*100))}%`;
+
+      if (label.toLowerCase().includes("real")) {
+        setStatus("Real", "good");
+      } else {
+        setStatus("AI-generated", "bad");
+      }
+    } catch (e) {
+      setStatus("Error");
+      errEl.textContent = "Couldn’t analyze that image. Try another file.";
+      console.error(e);
+    }
+  }
+
+  fileInput.addEventListener("change", () => {
+    const f = fileInput.files?.[0];
+    if (f) predict(f);
+  });
+
+  // Drag & drop
+  ["dragenter","dragover"].forEach(evt => drop.addEventListener(evt, (e) => {
+    e.preventDefault(); e.stopPropagation();
+    drop.classList.add("drag");
+  }));
+  ["dragleave","drop"].forEach(evt => drop.addEventListener(evt, (e) => {
+    e.preventDefault(); e.stopPropagation();
+    drop.classList.remove("drag");
+  }));
+  drop.addEventListener("drop", (e) => {
+    const f = e.dataTransfer.files?.[0];
+    if (f) predict(f);
+  });
+</script>
+</body>
+</html>
