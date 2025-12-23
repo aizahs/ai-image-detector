@@ -12,6 +12,17 @@ DEVICE = "mps" if torch.backends.mps.is_available() else (
     "cuda" if torch.cuda.is_available() else "cpu"
 )
 
+from pathlib import Path
+from huggingface_hub import hf_hub_download
+import os
+
+MODEL_PATH = Path("model.pt")
+if not MODEL_PATH.exists():
+    repo_id = os.environ.get("HF_REPO_ID", "AIzahS/ai-image-detector-model")
+    filename = os.environ.get("HF_MODEL_FILENAME", "model.pt")
+    downloaded = hf_hub_download(repo_id=repo_id, filename=filename)
+    Path(downloaded).replace(MODEL_PATH)
+    
 # -----------------------------
 # Load model checkpoint
 # -----------------------------

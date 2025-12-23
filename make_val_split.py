@@ -21,7 +21,7 @@ def copy_all(src_dir: Path, dst_dir: Path):   # copy all images into dst_dir
         if img.is_file():
             shutil.copy2(img, dst_dir / img.name)
 
-def move_some(src_dir: Path, dst_dir: Path, count: int):   # move 'count' images from src_dir to dst_dir
+def move_some(src_dir: Path, dst_dir: Path, count: int):   #
     ensure_dir(dst_dir)
     files = [p for p in src_dir.glob("*") if p.is_file()]
     random.shuffle(files)
@@ -30,7 +30,7 @@ def move_some(src_dir: Path, dst_dir: Path, count: int):   # move 'count' images
         shutil.move(str(p), dst_dir / p.name)
     return len(chosen)
 
-def main():      
+def main():
     # Expected CIFAKE layout after renaming:
     # archive/train/real, archive/train/ai, archive/test/real, archive/test/ai
     for cls in ["real", "ai"]:
