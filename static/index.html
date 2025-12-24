@@ -10,17 +10,10 @@
     .card { background:#111a2b; border:1px solid #223055; border-radius: 16px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
     h1 { font-size: 28px; margin: 0 0 8px; }
     p { color:#b9c6e6; margin: 0 0 18px; line-height: 1.4; }
-    .row { display: grid; grid-template-columns: 1fr; gap: 14px; }
-    .drop {
-      border: 2px dashed #2f4275; border-radius: 16px; padding: 18px; text-align: center;
-      background: rgba(255,255,255,.02);
-    }
+    .drop { border: 2px dashed #2f4275; border-radius: 16px; padding: 18px; text-align: center; background: rgba(255,255,255,.02); }
     .drop.drag { border-color:#7aa2ff; background: rgba(122,162,255,.08); }
     input[type="file"] { display:none; }
-    .btn {
-      display:inline-block; cursor:pointer; user-select:none;
-      background:#4c7dff; color:#071024; padding: 10px 14px; border-radius: 12px; font-weight: 650;
-    }
+    .btn { display:inline-block; cursor:pointer; user-select:none; background:#4c7dff; color:#071024; padding: 10px 14px; border-radius: 12px; font-weight: 650; }
     .btn:active { transform: translateY(1px); }
     .meta { font-size: 13px; color:#9fb0da; margin-top: 10px; }
     .preview { display:flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
@@ -78,7 +71,16 @@
   const fillEl = document.getElementById("fill");
   const errEl = document.getElementById("err");
 
-  function setStatus(text, kind="") {
+  // ✅ CHANGE THIS to your Render backend URL (no trailing slash)
+  const PROD_API_BASE = "https://ai-image-detector-kx2u.onrender.com";
+
+  function getApiBase() {
+    const h = window.location.hostname;
+    const isLocal = (h === "127.0.0.1" || h === "localhost");
+    return isLocal ? "http://127.0.0.1:8000" : PROD_API_BASE;
+  }
+
+  function setStatus(text, kind = "") {
     statusEl.textContent = text;
     statusEl.className = "pill " + kind;
   }
@@ -91,34 +93,35 @@
     probEl.textContent = "P(AI-generated): —";
     fillEl.style.width = "0%";
 
-    // show preview
     preview.style.display = "flex";
     imgEl.src = URL.createObjectURL(file);
 
     const form = new FormData();
     form.append("file", file);
 
+    const API_BASE = getApiBase();
+    console.log("Using API:", API_BASE);
+
     try {
-      const res = await fetch("/predict", { method: "POST", body: form });
+      const res = await fetch(`${API_BASE}/predict`, { method: "POST", body: form });
+
       if (!res.ok) {
         const t = await res.text();
         throw new Error(t || `HTTP ${res.status}`);
       }
+
       const data = await res.json();
-      const label = data.label;
+      const label = String(data.label ?? "");
       const conf = Number(data.confidence ?? 0);
       const prob = Number(data.prob_ai_generated ?? 0);
 
       labelEl.textContent = label;
-      confEl.textContent = `Confidence: ${(conf*100).toFixed(1)}%`;
-      probEl.textContent = `P(AI-generated): ${(prob*100).toFixed(1)}%`;
-      fillEl.style.width = `${Math.max(0, Math.min(100, prob*100))}%`;
+      confEl.textContent = `Confidence: ${(conf * 100).toFixed(1)}%`;
+      probEl.textContent = `P(AI-generated): ${(prob * 100).toFixed(1)}%`;
+      fillEl.style.width = `${Math.max(0, Math.min(100, prob * 100))}%`;
 
-      if (label.toLowerCase().includes("real")) {
-        setStatus("Real", "good");
-      } else {
-        setStatus("AI-generated", "bad");
-      }
+      if (label.toLowerCase().includes("real")) setStatus("Real", "good");
+      else setStatus("AI-generated", "bad");
     } catch (e) {
       setStatus("Error");
       errEl.textContent = "Couldn’t analyze that image. Try another file.";
@@ -131,15 +134,20 @@
     if (f) predict(f);
   });
 
-  // Drag & drop
-  ["dragenter","dragover"].forEach(evt => drop.addEventListener(evt, (e) => {
-    e.preventDefault(); e.stopPropagation();
-    drop.classList.add("drag");
-  }));
-  ["dragleave","drop"].forEach(evt => drop.addEventListener(evt, (e) => {
-    e.preventDefault(); e.stopPropagation();
-    drop.classList.remove("drag");
-  }));
+  ["dragenter", "dragover"].forEach(evt =>
+    drop.addEventListener(evt, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      drop.classList.add("drag");
+    })
+  );
+
+  ["dragleave", "drop"].forEach(evt =>
+    drop.addEventListener(evt, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      drop.classList.remove("drag");
+    })
+  );
+
   drop.addEventListener("drop", (e) => {
     const f = e.dataTransfer.files?.[0];
     if (f) predict(f);
