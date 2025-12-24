@@ -14,4 +14,3 @@ genimage_subset/
 *.z05
 
 # model weights (too big for normal git)
-model.pt
