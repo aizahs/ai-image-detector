@@ -1,16 +1,26 @@
+# venv / python
 .venv/
 __pycache__/
 *.pyc
-.DS_Store
+.ipynb_checkpoints/
 
-# datasets / large files
+# data / datasets / downloads
 data/
 genimage_subset/
+coco/
+unsplash*/
 *.zip
-*.z01
-*.z02
-*.z03
-*.z04
-*.z05
+*.gz
+*.tar
+*.tar.gz
+*.7z
 
-# model weights (too big for normal git)
+# models / weights
+*.pt
+*.pth
+*.onnx
+
+# mac / editor
+.DS_Store
+.vscode/
+.idea/
