@@ -3,39 +3,23 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.log
-*.sqlite3
-
-# Virtual env
 .venv/
 venv/
-env/
+.env
 
-# OS / Editor
+# OS / editor
 .DS_Store
 .vscode/
-.idea/
 
-# Data / datasets (DO NOT COMMIT)
+# Model / data
+model.pt
 data/
-coco/
-coco_*/
-real_pool_*/
+genimage_subset/
 real_pool_unsplash/
-ai_pool_*/
-unsplash-*/
+coco/
 *.zip
 *.tar
 *.gz
 
-# Model artifacts (choose ONE strategy)
-# If you want model.pt tracked, comment this out.
-# model.pt
-
-# Training outputs
-runs/
-outputs/
-checkpoints/
-*.pt.tmp
-*.pth
-*.ckpt
+# Logs
+*.log
