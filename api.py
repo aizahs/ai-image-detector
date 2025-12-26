@@ -93,10 +93,18 @@ def ensure_model_file() -> Path:
         return model_path
 
     if HF_REPO_ID and hf_hub_download is not None:
-        downloaded_path = hf_hub_download(repo_id=HF_REPO_ID, filename=HF_MODEL_FILENAME)
-        downloaded_path = Path(downloaded_path)
-        downloaded_path.replace(model_path)  # move into working dir as MODEL_FILENAME
-        return model_path
+        downloaded_path = Path(
+            hf_hub_download(
+                repo_id=HF_REPO_ID,
+                filename=HF_MODEL_FILENAME
+        )
+    )
+
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    model_path.write_bytes(downloaded_path.read_bytes())
+
+    return model_path
+
 
     raise FileNotFoundError(
         f"Missing {MODEL_FILENAME}. "
