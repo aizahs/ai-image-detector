@@ -1,26 +1,41 @@
-# venv / python
-.venv/
+# Python
 __pycache__/
 *.pyc
-.ipynb_checkpoints/
+*.pyo
+*.pyd
+*.log
+*.sqlite3
 
-# data / datasets / downloads
-data/
-genimage_subset/
-coco/
-unsplash*/
-*.zip
-*.gz
-*.tar
-*.tar.gz
-*.7z
+# Virtual env
+.venv/
+venv/
+env/
 
-# models / weights
-*.pt
-*.pth
-*.onnx
-
-# mac / editor
+# OS / Editor
 .DS_Store
 .vscode/
 .idea/
+
+# Data / datasets (DO NOT COMMIT)
+data/
+coco/
+coco_*/
+real_pool_*/
+real_pool_unsplash/
+ai_pool_*/
+unsplash-*/
+*.zip
+*.tar
+*.gz
+
+# Model artifacts (choose ONE strategy)
+# If you want model.pt tracked, comment this out.
+# model.pt
+
+# Training outputs
+runs/
+outputs/
+checkpoints/
+*.pt.tmp
+*.pth
+*.ckpt
