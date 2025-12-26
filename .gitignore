@@ -1,25 +1,25 @@
 # Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
 .venv/
-venv/
 .env
 
-# OS / editor
+# OS/editor
 .DS_Store
 .vscode/
 
-# Model / data
-model.pt
+# Datasets / large assets (DO NOT COMMIT)
 data/
 genimage_subset/
 real_pool_unsplash/
+real_pool_coco/
 coco/
 *.zip
 *.tar
 *.gz
 
-# Logs
-*.log
+# Model weights (store on Hugging Face instead)
+model.pt
+*.pt
+*.pth
+*.onnx
