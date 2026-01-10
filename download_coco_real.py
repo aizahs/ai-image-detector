@@ -16,7 +16,7 @@ def unzip(zip_path: Path, out_dir: Path):
         z.extractall(out_dir)
 
 def main():
-    # COCO 2017 train/val images (real photographs)
+    # COCO 2017 
     urls = {
         "train2017.zip": "http://images.cocodataset.org/zips/train2017.zip",
         "val2017.zip": "http://images.cocodataset.org/zips/val2017.zip",

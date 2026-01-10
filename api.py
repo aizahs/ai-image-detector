@@ -16,8 +16,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from torchvision import transforms
 
-# Optional (recommended for deployment): download model from Hugging Face Hub
-# pip install huggingface_hub
 try:
     from huggingface_hub import hf_hub_download
 except Exception:
@@ -37,37 +35,29 @@ def sha256_file(path: str) -> str:
     return h.hexdigest()[:12]
 
 
-# -----------------------------
-# Config
-# -----------------------------
 APP_TITLE = "AI Image Detector"
 STATIC_DIR = "static"
 
-# If model.pt is not present, we will download it from HF_REPO_ID (if set).
+
 MODEL_FILENAME = os.environ.get("MODEL_FILENAME", "model.pt")
 
-# Example: HF_REPO_ID="AIzahS/ai-image-detector-model"
+
 HF_REPO_ID = os.environ.get("HF_REPO_ID", "")
 HF_MODEL_FILENAME = os.environ.get("HF_MODEL_FILENAME", "model.pt")
 
-# Patch voting: higher = more stable but slower
+
 VOTES = int(os.environ.get("VOTES", "7"))
 
-# Upload size guard
+
 MAX_BYTES = int(os.environ.get("MAX_BYTES", str(12 * 1024 * 1024)))  # 12MB
 
 
-# -----------------------------
-# Device
-# -----------------------------
+
 DEVICE = "mps" if torch.backends.mps.is_available() else (
     "cuda" if torch.cuda.is_available() else "cpu"
 )
 
 
-# -----------------------------
-# Hash helper (to verify deployed weights)
-# -----------------------------
 def sha256_file(path: str) -> str:
     p = Path(path)
     if not p.exists():
@@ -79,9 +69,6 @@ def sha256_file(path: str) -> str:
     return h.hexdigest()[:12]
 
 
-# -----------------------------
-# Model file loader
-# -----------------------------
 def ensure_model_file() -> Path:
     """
     Ensure model file exists locally.
@@ -112,18 +99,16 @@ def ensure_model_file() -> Path:
     )
 
 
-# -----------------------------
-# Robust image loading
-# -----------------------------
+
 def load_image_safe(file_bytes: bytes) -> Image.Image:
     if len(file_bytes) > MAX_BYTES:
         raise ValueError("File too large.")
 
     try:
         img = Image.open(io.BytesIO(file_bytes))
-        img = ImageOps.exif_transpose(img)  # fix rotation
+        img = ImageOps.exif_transpose(img) 
         img = img.convert("RGB")
-        img.load()  # force decode now
+        img.load() 
         return img
     except UnidentifiedImageError as e:
         raise ValueError("Unsupported image format.") from e
@@ -131,9 +116,7 @@ def load_image_safe(file_bytes: bytes) -> Image.Image:
         raise ValueError("Corrupted or truncated image.") from e
 
 
-# -----------------------------
-# Load model
-# -----------------------------
+
 MODEL_PATH = ensure_model_file()
 MODEL_SHA = sha256_file(str(MODEL_PATH))
 
@@ -149,9 +132,7 @@ model.eval().to(DEVICE)
 print(f"[startup] device={DEVICE} arch={arch} model={MODEL_PATH} sha={MODEL_SHA} classes={class_to_idx}")
 
 
-# -----------------------------
-# Transforms (patch voting)
-# -----------------------------
+
 base_resize = transforms.Resize(512)
 
 crop_tfm = transforms.Compose([
@@ -178,12 +159,12 @@ def predict_image(img: Image.Image, votes: int = VOTES) -> Tuple[str, float, flo
 
     probs_y1 = []
     with torch.no_grad():
-        # Center crop baseline
+     
         x0 = center_tfm(resized).unsqueeze(0).to(DEVICE)
         logit0 = model(x0).squeeze(1)[0]
         probs_y1.append(torch.sigmoid(logit0).item())
 
-        # Random crop votes
+
         for _ in range(max(1, votes) - 1):
             x = crop_tfm(resized).unsqueeze(0).to(DEVICE)
             logit = model(x).squeeze(1)[0]
@@ -191,7 +172,7 @@ def predict_image(img: Image.Image, votes: int = VOTES) -> Tuple[str, float, flo
 
     prob_y1 = sum(probs_y1) / len(probs_y1)
 
-    # Map y==1 to actual class name ("ai" or "real")
+
     class_for_one = idx_to_class[1]
     if class_for_one == "ai":
         prob_ai = prob_y1
@@ -203,21 +184,17 @@ def predict_image(img: Image.Image, votes: int = VOTES) -> Tuple[str, float, flo
     return label, float(confidence), float(prob_ai)
 
 
-# -----------------------------
-# FastAPI app
-# -----------------------------
 app = FastAPI(title=APP_TITLE)
 
-# Needed so Vercel frontend can call Render backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # later: restrict to your Vercel domain
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Serve frontend if you want (optional)
+
 if Path(STATIC_DIR).exists():
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 

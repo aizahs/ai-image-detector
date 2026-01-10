@@ -35,7 +35,6 @@ def accuracy_from_logits(logits, y):
     return (preds == y).float().mean().item()
 
 def main():
-    # Expecting: data/train/{ai,real} and data/val/{ai,real}
     train_dir = Path("data/train")
     val_dir = Path("data/val")
 
@@ -53,7 +52,7 @@ def main():
     val_loader   = DataLoader(val_ds, batch_size=32, shuffle=False, num_workers=0, pin_memory=False)
 
 
-    # Binary classifier (single logit)
+
     model = timm.create_model("efficientnet_b0", pretrained=True, num_classes=1)
     model.to(DEVICE)
 
@@ -61,10 +60,10 @@ def main():
     optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=1e-4)
 
     best_val_acc = 0.0
-    epochs = 2  # MVP: keep it short. You can increase later.
+    epochs = 2  
 
     for epoch in range(1, epochs + 1):
-       # ---- Train ----
+
         model.train()
         train_acc_sum = 0.0
         train_batches = 0
@@ -93,7 +92,7 @@ def main():
 
        
         train_acc = train_acc_sum / max(1, train_batches)
-        # ---- Validate ----
+
         model.eval()
         val_acc_sum = 0.0
         val_batches = 0
@@ -111,7 +110,7 @@ def main():
 
         print(f"Epoch {epoch}/{epochs} | train_acc={train_acc:.4f} | val_acc={val_acc:.4f}")
 
-        # Save best model
+
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             torch.save(
@@ -122,7 +121,7 @@ def main():
                 },
                 "model.pt",
             )
-            print("✅ Saved model.pt (best so far)")
+            print(" Saved model.pt (best so far)")
 
     print("Done. Best val_acc:", round(best_val_acc, 4))
 

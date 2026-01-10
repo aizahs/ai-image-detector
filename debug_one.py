@@ -33,11 +33,10 @@ x = center_tfm(img).unsqueeze(0).to(DEVICE)
 
 with torch.no_grad():
     logit = model(x).squeeze()
-    p1 = torch.sigmoid(logit).item()   # probability of "class index 1"
+    p1 = torch.sigmoid(logit).item()   
 
 print("p(class_index_1) =", round(p1, 4), " -> class 1 =", idx_to_class[1])
 
-# Convert to prob_ai in a way that cannot be wrong:
 if idx_to_class[1] == "ai":
     prob_ai = p1
 else:

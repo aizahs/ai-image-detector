@@ -2,20 +2,17 @@ import random
 import shutil
 from pathlib import Path
 
-# Folder that contains: gan_pool/, mj_pool/, real_pool/, sd_pool/
 SRC = Path("genimage_subset")
 
-# Where we will create the training structure your code expects
 OUT = Path("data")
 
 REAL_DIR = SRC / "real_pool"
 AI_DIRS = [SRC / "sd_pool", SRC / "mj_pool", SRC / "gan_pool"]
 
-# Keep it laptop-friendly (you can increase later)
 MAX_REAL = 6000
 MAX_AI = 6000
 
-# Split ratios
+
 TRAIN_FRAC = 0.8
 VAL_FRAC = 0.1
 TEST_FRAC = 0.1
@@ -35,7 +32,6 @@ def list_images(folder: Path):
 def copy_files(files, dst: Path):
     dst.mkdir(parents=True, exist_ok=True)
     for p in files:
-        # Copy and keep filename only
         shutil.copy2(p, dst / p.name)
 
 
@@ -77,11 +73,9 @@ def main():
     real_train, real_val, real_test = split_list(real_imgs)
     ai_train, ai_val, ai_test = split_list(ai_imgs)
 
-    # Remove old data folder so you don't accidentally mix datasets
     if OUT.exists():
         shutil.rmtree(OUT)
 
-    # Copy into the structure torchvision ImageFolder expects
     copy_files(real_train, OUT / "train" / "real")
     copy_files(ai_train,   OUT / "train" / "ai")
 
@@ -91,7 +85,7 @@ def main():
     copy_files(real_test, OUT / "test" / "real")
     copy_files(ai_test,   OUT / "test" / "ai")
 
-    print("✅ Done creating splits!")
+    print(" Done creating splits!")
     print(f"Train: real={len(real_train)} ai={len(ai_train)}")
     print(f"Val:   real={len(real_val)} ai={len(ai_val)}")
     print(f"Test:  real={len(real_test)} ai={len(ai_test)}")

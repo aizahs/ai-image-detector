@@ -6,8 +6,8 @@ from time import sleep
 
 CSV_PATH = "photos.csv"
 OUT_DIR = Path("unsplash_real")
-MAX_IMAGES = 3000        # start small
-SLEEP_SEC = 0.3          # be polite
+MAX_IMAGES = 3000       
+SLEEP_SEC = 0.3          
 
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 

@@ -6,7 +6,6 @@ import shutil
 OUT = Path("data/train/real")
 OUT.mkdir(parents=True, exist_ok=True)
 
-# This automatically downloads & caches correctly
 dataset = CocoDetection(
     root="coco_images",
     annFile=None,
@@ -15,7 +14,6 @@ dataset = CocoDetection(
 
 print("Total COCO images:", len(dataset))
 
-# Sample a reasonable amount
 N = 6000
 idxs = random.sample(range(len(dataset)), N)
 
