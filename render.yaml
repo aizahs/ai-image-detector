@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ai-image-detector
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: HF_REPO_ID
+        value: AIzahS/ai-image-detector-model
+      - key: HF_MODEL_FILENAME
+        value: model.pt
