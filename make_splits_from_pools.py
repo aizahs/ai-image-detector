@@ -9,9 +9,12 @@ OUT = Path("data")
 REAL_DIR = SRC / "real_pool"
 AI_DIRS = [SRC / "sd_pool", SRC / "mj_pool", SRC / "gan_pool"]
 
-MAX_REAL = 6000
-MAX_AI = 6000
-
+# MJ and GAN pools are small (500 each) — use all of them
+# SD pool is large (5000) — use more to increase total data, but cap to avoid domination
+MAX_MJ  = 500
+MAX_GAN = 500
+MAX_SD  = 2000
+MAX_REAL = MAX_MJ + MAX_GAN + MAX_SD  # 3000 — matches total AI for balanced classes
 
 TRAIN_FRAC = 0.8
 VAL_FRAC = 0.1
@@ -32,7 +35,9 @@ def list_images(folder: Path):
 def copy_files(files, dst: Path):
     dst.mkdir(parents=True, exist_ok=True)
     for p in files:
-        shutil.copy2(p, dst / p.name)
+        # Prefix with source pool name to avoid collisions across pools
+        fname = f"{p.parent.name}_{p.name}"
+        shutil.copy2(p, dst / fname)
 
 
 def split_list(items):
@@ -55,20 +60,25 @@ def main():
             raise FileNotFoundError(f"Missing folder: {d}")
 
     real_imgs = list_images(REAL_DIR)
-    ai_imgs = []
-    for d in AI_DIRS:
-        ai_imgs.extend(list_images(d))
-
     if len(real_imgs) == 0:
         raise RuntimeError(f"No images found in {REAL_DIR}")
-    if len(ai_imgs) == 0:
-        raise RuntimeError(f"No images found in AI dirs: {AI_DIRS}")
+
+    caps = {"sd_pool": MAX_SD, "mj_pool": MAX_MJ, "gan_pool": MAX_GAN}
+
+    ai_imgs = []
+    for d in AI_DIRS:
+        pool = list_images(d)
+        if len(pool) == 0:
+            raise RuntimeError(f"No images found in AI dir: {d}")
+        cap = caps.get(d.name, MAX_MJ)
+        random.shuffle(pool)
+        ai_imgs.extend(pool[:cap])
+        print(f"  {d.name}: using {min(len(pool), cap)} of {len(pool)} images")
 
     random.shuffle(real_imgs)
     random.shuffle(ai_imgs)
 
     real_imgs = real_imgs[:MAX_REAL]
-    ai_imgs = ai_imgs[:MAX_AI]
 
     real_train, real_val, real_test = split_list(real_imgs)
     ai_train, ai_val, ai_test = split_list(ai_imgs)
